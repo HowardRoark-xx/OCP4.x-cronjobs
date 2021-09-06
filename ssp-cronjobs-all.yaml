@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: List
+metadata: {}
+items:
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: ssp-dc-scaler
+    namespace: nvs-rstudio-ide
+    labels:
+      app: cronjob-ssp-dc-scaler
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: ssp-dc-scaler
+    labels:
+      app: cronjob-ssp-dc-scaler
+  rules:
+    - apiGroups:
+        - ''
+        - apps.openshift.io
+      resources:
+        - deploymentconfigs
+        - deploymentconfigs/scale
+      verbs:
+        - get
+        - list
+        - watch
+        - update
+        - patch
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: ssp-dc-scaler
+    labels:
+      app: cronjob-ssp-dc-scaler
+  subjects:
+    - kind: ServiceAccount
+      name: ssp-dc-scaler
+      namespace: nvs-rstudio-ide
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: ssp-dc-scaler
+- apiVersion: batch/v1beta1
+  kind: CronJob
+  metadata:
+    name: ssp-dc-scaler
+    namespace: nvs-rstudio-ide
+    labels:
+      app: cronjob-ssp-dc-scaler
+  spec:
+    schedule: "50 23 * * 6"
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 2
+    failedJobsHistoryLimit: 3
+    jobTemplate:
+      metadata:
+        labels:
+          app: cronjob-ssp-dc-scaler
+      spec:
+        backoffLimit: 0
+        template:
+          metadata:
+            labels:
+              app: cronjob-ssp-dc-scaler
+          spec:
+            containers:
+              - name: ssp-dc-scaler
+                image: "registry.redhat.io/openshift4/ose-cli:v4.6"
+                command:
+                  - "/bin/bash"
+                  - "-c"
+                  - |
+                    #/bin/bash
+                    export HOME=/tmp
+                    TIMESTAMP=$(date +%F--%H-%M-%S)
+                    cronjoblog=/cronjob-logs/ssp-conjobs.log
+                    echo "$TIMESTAMP: scaling down the dc" | tee -a $cronjoblog
+                    for dc in $(oc get dc  --no-headers | awk '/ssp/ {print $1}' )
+                    do
+                      echo "scaling down dc $dc" | tee -a $cronjoblog
+                      oc scale dc $dc --replicas=0 
+                      sleep 60
+                      echo "scaling up dc $dc" | tee -a $cronjoblog
+                      oc scale dc $dc --replicas=1
+                    done
+                    TIMESTAMP=$(date +%F--%H-%M-%S)
+                    echo "$TIMESTAMP: scaling down the dc completed" | tee -a $cronjoblog
+                    echo "-------------------------------------------" | tee -a $cronjoblog
+                volumeMounts:
+                  - mountPath: /cronjob-logs
+                    name: log-v01
+            volumes:
+              - hostPath:
+                  path: /ocp46-pv-storage/shiny
+                name: log-v01
+            restartPolicy: "Never"
+            terminationGracePeriodSeconds: 360
+            activeDeadlineSeconds: 1800
+            backOffLimit: 6
+            securityContext:
+              runAsUser: 0
+              fsGroup: 0
+            dnsPolicy: "ClusterFirst"
+            serviceAccountName: "ssp-dc-scaler"
+            serviceAccount: "ssp-dc-scaler"
