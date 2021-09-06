@@ -1,0 +1,417 @@
+apiVersion: v1
+kind: List
+metadata: {}
+items:
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftWebConsole
+    labels:
+      app: nvs-jupyterhub
+    name: nvs-jupyterhub
+    namespace: jh
+  spec:
+    replicas: 1
+    selector:
+      app: nvs-jupyterhub
+      deploymentconfig: nvs-jupyterhub
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftWebConsole
+        creationTimestamp: null
+        labels:
+          app: nvs-jupyterhub
+          deploymentconfig: nvs-jupyterhub
+      spec:
+        containers:
+        - image: image-registry.openshift-image-registry.svc:5000/jh/nvs-jupyterhub@sha256:fcc00fc7beadd9ae4ae467357f128b6a14c1637f4dfc18cc2fa696071885ff97
+          imagePullPolicy: Always
+          name: nvs-jupyterhub
+          env:
+          - name: NO_PROXY
+            value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
+          - name: no_proxy
+            value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          ports:
+          - containerPort: 8000
+            protocol: TCP
+          - containerPort: 8081
+            protocol: TCP
+          - containerPort: 8787
+            protocol: TCP
+          - containerPort: 8888
+            protocol: TCP
+          resources:
+            limits:
+              cpu: '2'
+              memory: 4000Mi
+            requests:
+              cpu: 100m
+              memory: 1000Mi
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /home
+            name: home
+          - mountPath: /view
+            name: view
+          - mountPath: /jh
+            name: jh
+          - mountPath: /opt/anaconda3/etc/jupyter/jupyterhub_config.py
+            name: jhconf
+          - mountPath: /etc/nslcd.conf
+            name: nslcd
+          - mountPath: /etc/openldap/ldap.conf
+            name: ldapconf
+          - mountPath: /opt/anaconda3/bin/startup-local.sh
+            name: jh-startup
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - hostPath:
+            path: /home
+          name: home
+        - hostPath:
+            path: /view
+          name: view
+        - hostPath:
+            path: /ocp46-pv-storage/jh
+          name: jh
+        - hostPath:
+            path: /ocp46-pv-storage/jh/jupyterhub_config.py
+          name: jhconf
+        - hostPath:
+            path: /ocp46-pv-storage/jh/nslcd.conffile
+          name: nslcd
+        - hostPath:
+            path: /ocp46-pv-storage/jh/ldap.conf
+          name: ldapconf
+        - hostPath:
+            path: /ocp46-pv-storage/jh/startup-local.sh
+          name: jh-startup
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - nvs-jupyterhub
+        from:
+          kind: ImageStreamTag
+          name: nvs-jupyterhub:latest
+          namespace: jh
+        lastTriggeredImage: image-registry.openshift-image-registry.svc:5000/jh/nvs-jupyterhub@sha256:fcc00fc7beadd9ae4ae467357f128b6a14c1637f4dfc18cc2fa696071885ff97
+      type: ImageChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftWebConsole
+    labels:
+      app: nvs-jupyterhub
+    name: nvs-jupyterhub
+    namespace: jh
+  spec:
+    ports:
+    - name: 8000-tcp
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+    - name: 8081-tcp
+      port: 8081
+      protocol: TCP
+      targetPort: 8081
+    - name: 8787-tcp
+      port: 8787
+      protocol: TCP
+      targetPort: 8787
+    - name: 8888-tcp
+      port: 8888
+      protocol: TCP
+      targetPort: 8888
+    selector:
+      deploymentconfig: nvs-jupyterhub
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Route
+  metadata:
+    labels:
+      app: nvs-jupyterhub-proxy
+    name: nvs-jupyterhub-proxy
+    namespace: jh
+  spec:
+    host: jupyterhub.apps.dit-devocp.novartis.net
+    port:
+      targetPort: 8000-tcp
+    to:
+      kind: Service
+      name: nvs-jupyterhub-proxy
+      weight: 100
+    wildcardPolicy: None
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftWebConsole
+    labels:
+      app: nvs-jupyterhub-proxy
+    name: nvs-jupyterhub-proxy
+    namespace: jh
+  spec:
+    replicas: 1
+    selector:
+      app: nvs-jupyterhub-proxy
+      deploymentconfig: nvs-jupyterhub-proxy
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftWebConsole
+        creationTimestamp: null
+        labels:
+          app: nvs-jupyterhub-proxy
+          deploymentconfig: nvs-jupyterhub-proxy
+      spec:
+        containers:
+        - image: image-registry.openshift-image-registry.svc:5000/jh/nvs-jupyterhub@sha256:fcc00fc7beadd9ae4ae467357f128b6a14c1637f4dfc18cc2fa696071885ff97
+          imagePullPolicy: Always
+          name: nvs-jupyterhub-proxy
+          command:
+          - /opt/anaconda3/bin/startup-proxy.sh
+          env:
+          - name: CONFIGPROXY_AUTH_TOKEN
+            value: "ad4b0583dd36fda018fa40f34f788d05630bef40e29822507cddfa99d9bb6d3c"
+          - name: NO_PROXY
+            value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
+          - name: no_proxy
+            value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
+          ports:
+          - containerPort: 8000
+            protocol: TCP
+          - containerPort: 8081
+            protocol: TCP
+          - containerPort: 8787
+            protocol: TCP
+          - containerPort: 8888
+            protocol: TCP
+          resources:
+            limits:
+              cpu: '2'
+              memory: 4000Mi
+            requests:
+              cpu: 100m
+              memory: 1000Mi
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /home
+            name: home
+          - mountPath: /view
+            name: view
+          - mountPath: /jh
+            name: jh
+          - mountPath: /opt/anaconda3/etc/jupyter/jupyterhub_config.py
+            name: jhconf
+          - mountPath: /etc/nslcd.conf
+            name: nslcd
+          - mountPath: /etc/openldap/ldap.conf
+            name: ldapconf
+          - mountPath: /opt/anaconda3/bin/startup-proxy.sh
+            name: jh-startup
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - hostPath:
+            path: /home
+          name: home
+        - hostPath:
+            path: /view
+          name: view
+        - hostPath:
+            path: /ocp46-pv-storage/jh
+          name: jh
+        - hostPath:
+            path: /ocp46-pv-storage/jh/jupyterhub_config.py
+          name: jhconf
+        - hostPath:
+            path: /ocp46-pv-storage/jh/nslcd.conffile
+          name: nslcd
+        - hostPath:
+            path: /ocp46-pv-storage/jh/ldap.conf
+          name: ldapconf
+        - hostPath:
+            path: /ocp46-pv-storage/jh/startup-proxy.sh
+          name: jh-startup
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - nvs-jupyterhub-proxy
+        from:
+          kind: ImageStreamTag
+          name: nvs-jupyterhub:latest
+          namespace: jh
+        lastTriggeredImage: image-registry.openshift-image-registry.svc:5000/jh/nvs-jupyterhub@sha256:fcc00fc7beadd9ae4ae467357f128b6a14c1637f4dfc18cc2fa696071885ff97
+      type: ImageChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftWebConsole
+    labels:
+      app: nvs-jupyterhub-proxy
+    name: nvs-jupyterhub-proxy
+    namespace: jh
+  spec:
+    ports:
+    - name: 8000-tcp
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+    - name: 8081-tcp
+      port: 8081
+      protocol: TCP
+      targetPort: 8081
+    - name: 8787-tcp
+      port: 8787
+      protocol: TCP
+      targetPort: 8787
+    - name: 8888-tcp
+      port: 8888
+      protocol: TCP
+      targetPort: 8888
+    selector:
+      deploymentconfig: nvs-jupyterhub-proxy
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: jh-sa
+    namespace: jh
+    labels:
+      app: cronjob-jh-pod
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: jh-sa
+    labels:
+      app: cronjob-jh-pod
+  rules:
+    - apiGroups:
+        - ''
+        - apps.openshift.io
+      resources:
+        - pods
+        - pods/attach
+        - pods/exec
+      verbs:
+        - get
+        - list
+        - watch
+        - update
+        - patch
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: jh-sa
+    labels:
+      app: cronjob-jh-pod
+  subjects:
+    - kind: ServiceAccount
+      name: jh-sa
+      namespace: jh
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: jh-sa
+- apiVersion: batch/v1beta1
+  kind: CronJob
+  metadata:
+    name: cronjob-jh-pod
+    namespace: jh
+    labels:
+      app: cronjob-jh-pod
+  spec:
+    schedule: "* 23 * * *"
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 2
+    failedJobsHistoryLimit: 3
+    jobTemplate:
+      metadata:
+        labels:
+          app: cronjob-jh-pod
+      spec:
+        backoffLimit: 0
+        template:
+          metadata:
+            labels:
+              app: cronjob-jh-pod
+          spec:
+            containers:
+              - name: ssp-dc-scaler
+                image: "registry.redhat.io/openshift4/ose-cli:v4.6"
+                command:
+                  - "/bin/bash"
+                  - "-c"
+                  - |
+                    #/bin/bash
+                    export HOME=/tmp
+                    TIMESTAMP=$(date +%F--%H-%M-%S)
+                    cronjoblog=/cronjob-jh/conjobs-copy.log
+                    echo "$TIMESTAMP: scaling down the dc" | tee -a $cronjoblog
+                    for pod in $(oc get pod  --no-headers | awk '/Running/ {print $1}' )
+                    do
+                      echo "Copying Files to Pod: $pod" | tee -a $cronjoblog
+                      oc rsync /cronjobs-jh/passwd-file $pod:/etc/passwd
+                      echo "Copying Files to Pod: $pod" | tee -a $cronjoblog
+                      oc rsync /cronjobs-jh/group-file $pod:/etc/group
+                    done
+                    TIMESTAMP=$(date +%F--%H-%M-%S)
+                    echo "$TIMESTAMP: Copying files completed" | tee -a $cronjoblog
+                    echo "-------------------------------------------" | tee -a $cronjoblog
+                volumeMounts:
+                  - mountPath: /cronjobs-jh
+                    name: log-v01
+            volumes:
+              - hostPath:
+                  path: /ocp46-pv-storage/jh
+                name: log-v01
+            restartPolicy: "Never"
+            terminationGracePeriodSeconds: 360
+            activeDeadlineSeconds: 1800
+            backOffLimit: 6
+            securityContext:
+              runAsUser: 0
+              fsGroup: 0
+            dnsPolicy: "ClusterFirst"
+            serviceAccountName: "jh-sa"
+            serviceAccount: "jh-sa"
