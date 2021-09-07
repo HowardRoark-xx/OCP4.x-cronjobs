@@ -3,7 +3,7 @@ Following commands need to be executed for the cronjob to run.
 
    To allow the cronjob to mount the hostpath
 
-      ! oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:nvs-rstudio-ide:ssp-dc-scaler
+      ! oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:<project>:ssp-dc-scaler
    
    
    To patch this cronjob
