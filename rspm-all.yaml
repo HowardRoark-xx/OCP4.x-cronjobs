@@ -6,17 +6,36 @@ items:
   kind: SecurityContextConstraints
   metadata:
     name: scc-rspm
+  allowHostDirVolumePlugin: true
+  allowHostIPC: true
+  allowHostNetwork: true
+  allowHostPID: true
+  allowHostPorts: true
+  allowPrivilegeEscalation: true
   allowPrivilegedContainer: true
+  allowedCapabilities:
+  - '*'
+  allowedUnsafeSysctls:
+  - '*'
+  defaultAddCapabilities: 
+  - ALL
+  priority: null
+  readOnlyRootFilesystem: false
+  requiredDropCapabilities: null
   runAsUser:
     type: RunAsAny
   seLinuxContext:
     type: RunAsAny
+  seccompProfiles:
+  - '*'
   fsGroup:
     type: RunAsAny
   supplementalGroups:
     type: RunAsAny
   users:
   - rspm-sa
+  volumes:
+  - '*'
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
@@ -59,6 +78,7 @@ items:
     annotations:
       openshift.io/generated-by: OpenShiftWebConsole
       openshift.io/scc: privileged
+      volume.beta.kubernetes.io/mount-options: nfs rw,relatime,exec,vers=3,rsize=65536,wsize=65536,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,mountaddr=147.167.170.43,mountvers=3,mountport=635,mountproto=udp,local_lock=none,addr=147.167.170.43 
     name: rstudio-package-manager
     namespace: package-manager
     labels:
@@ -118,6 +138,19 @@ items:
           - name: rstudio-package-manager
             image: >-
               image-registry.openshift-image-registry.svc:5000/package-manager/rstudio-package-manager@sha256:8c640f9b06a6116d92d427ce961ec8d90e30d06e6c68d7454c771448da756fa7
+            env:
+            - name: NO_PROXY
+              value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,10.129.2.0/23,10.130.2.0/23"
+            - name: no_proxy
+              value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,10.129.2.0/23,10.130.2.0/23"
+            - name: HTTP_PROXY
+              value: http://proxy.eu.novartis.net:2010
+            - name: HTTPS_PROXY
+              value: http://proxy.eu.novartis.net:2010
+            - name: http_proxy
+              value: http://proxy.eu.novartis.net:2010
+            - name: https_proxy
+              value: http://proxy.eu.novartis.net:2010                                          
             ports:
               - containerPort: 2112
                 protocol: TCP
@@ -142,13 +175,13 @@ items:
             emptyDir: {}
           - name: rspm-license
             hostPath:
-              path: /ocp46-pv-storage/rspm/liencse.lic
+              path: /ocp46-pv-storage/rspm/license.lic
           - name: rspm-cfg
             hostPath:
               path: /ocp46-pv-storage/rspm/rstudio-pm.gcfg
           - name: rspm-tmp
             hostPath:
-              path: /ocp46-pv-storage/rspm/
+              path: /ocp46-pv-storage/temp
         dnsPolicy: ClusterFirst
 - apiVersion: v1
   kind: Service
@@ -182,19 +215,22 @@ items:
 - apiVersion: route.openshift.io/v1
   kind: Route
   metadata:
-    name: rstudio-package-manager
-    namespace: package-manager
     labels:
       app: rstudio-package-manager
       app.kubernetes.io/component: rstudio-package-manager
       app.kubernetes.io/instance: rstudio-package-manager
       app.kubernetes.io/part-of: rstudio-package-manager-app
+    name: rstudio-package-manager
+    namespace: package-manager
   spec:
     host: rspm.apps.dit-devocp.novartis.net
+    port:
+      targetPort: 4242-tcp
+    tls:
+      insecureEdgeTerminationPolicy: Allow
+      termination: edge
     to:
       kind: Service
       name: rstudio-package-manager
       weight: 100
-    port:
-      targetPort: 2112-tcp
     wildcardPolicy: None
