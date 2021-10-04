@@ -1,0 +1,53 @@
+kind: CronJob
+metadata:
+  name: cronjob-rsc-matrics
+  namespace: rsc-matrics
+  labels:
+    app: cronjob-rsc-matrics
+spec:
+  schedule: "50 23 * * 6"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata:
+      labels:
+        app: cronjob-rsc-matrics
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: cronjob-rsc-matrics
+        spec:
+          containers:
+            - name: cronjob-rsc-matrics
+              image: "docker.io/governmentpaas/psql"
+              command:
+                - "psql"
+              args:
+                - "-h"
+                - hostname
+                - "-p"
+                - "5432"
+                - "-U"
+                - USER
+                - "-d"
+                - PASSWORD
+                - "-f" 
+                - /tmp/rscMetric-psql.sh
+              volumeMounts:
+                - name: data-v01
+                  mountPath: /tmp
+          volumes:
+            - name: data-v01
+              persistentVolumeClaim:
+                claimName: rsc-matrics-cronjob
+          restartPolicy: "Never"
+          terminationGracePeriodSeconds: 360
+          activeDeadlineSeconds: 1800
+          backOffLimit: 6
+          securityContext: {}
+          dnsPolicy: "ClusterFirst"
+          serviceAccountName: "default"
+          serviceAccount: "default"
