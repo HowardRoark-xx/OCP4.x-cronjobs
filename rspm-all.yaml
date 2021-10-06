@@ -111,8 +111,6 @@ items:
             kind: ImageStreamTag
             namespace: package-manager
             name: 'rstudio-package-manager:1.2.2.1-17'
-          lastTriggeredImage: >-
-            image-registry.openshift-image-registry.svc:5000/package-manager/rstudio-package-manager@sha256:8c640f9b06a6116d92d427ce961ec8d90e30d06e6c68d7454c771448da756fa7
       - type: ConfigChange
     replicas: 1
     revisionHistoryLimit: 10
@@ -136,8 +134,7 @@ items:
         securityContext: {}
         containers:
           - name: rstudio-package-manager
-            image: >-
-              image-registry.openshift-image-registry.svc:5000/package-manager/rstudio-package-manager@sha256:8c640f9b06a6116d92d427ce961ec8d90e30d06e6c68d7454c771448da756fa7
+            image: package-manager/rstudio-package-manager:1.2.2.1-17
             env:
             - name: NO_PROXY
               value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,10.129.2.0/23,10.130.2.0/23"
