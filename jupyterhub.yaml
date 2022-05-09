@@ -207,9 +207,9 @@ items:
           - name: CONFIGPROXY_AUTH_TOKEN
             value: "ad4b0583dd36fda018fa40f34f788d05630bef40e29822507cddfa99d9bb6d3c"
           - name: NO_PROXY
-            value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
+            value: "localhost,127.0.0.1,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
           - name: no_proxy
-            value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
+            value: "localhost,127.0.0.1,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
           ports:
           - containerPort: 8000
             protocol: TCP
