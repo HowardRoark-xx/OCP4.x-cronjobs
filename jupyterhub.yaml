@@ -157,7 +157,7 @@ items:
     name: nvs-jupyterhub-proxy
     namespace: jh
   spec:
-    host: jupyterhub.apps.dit-devocp.novartis.net
+    host: jupyterhub.apps.dit-devocp.example.com
     port:
       targetPort: 8000-tcp
     to:
