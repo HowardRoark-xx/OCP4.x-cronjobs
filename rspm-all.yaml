@@ -137,9 +137,9 @@ items:
             image: package-manager/rstudio-package-manager:1.2.2.1-17
             env:
             - name: NO_PROXY
-              value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,10.129.2.0/23,10.130.2.0/23"
+              value: "localhost,127.0.0.1,svc.cluster.local,10.129.2.0/23,10.130.2.0/23"
             - name: no_proxy
-              value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,10.129.2.0/23,10.130.2.0/23"
+              value: "localhost,127.0.0.1,svc.cluster.local,10.129.2.0/23,10.130.2.0/23"
             - name: HTTP_PROXY
               value: http://proxy.eu.novartis.net:2010
             - name: HTTPS_PROXY
@@ -220,7 +220,7 @@ items:
     name: rstudio-package-manager
     namespace: package-manager
   spec:
-    host: rspm.apps.dit-devocp.novartis.net
+    host: rspm.apps.dit-devocp.example.com
     port:
       targetPort: 4242-tcp
     tls:
