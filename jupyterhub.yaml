@@ -40,9 +40,9 @@ items:
           name: nvs-jupyterhub
           env:
           - name: NO_PROXY
-            value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
+            value: "localhost,127.0.0.1,,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
           - name: no_proxy
-            value: "localhost,127.0.0.1,eu.novartis.net,novartis.net,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
+            value: "localhost,127.0.0.1,svc.cluster.local,nvs-jupyterhub,nvs-jupyterhub-proxy,10.129.2.0/23,10.130.2.0/23"
           - name: MY_POD_IP
             valueFrom:
               fieldRef:
